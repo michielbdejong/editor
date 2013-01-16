@@ -19,12 +19,18 @@
     <script src="codemirror-3.0/lib/util/dialog.js"></script>
 
     <script src="remotestorage/remoteStorage-relative-cube.js"></script>
+    <style>
+      ul li { display: inline }
+    </style>
   </head>
   <body>
     <div id="remotestorage-connect"></div>
     <h1>Editor</h1>
     <div id="pleaseConnect">Please connect...</div>
     <div id="main">
+      <ul id="cwd"></ul>
+      <ul id="dirs"></ul>
+      <ul id="files"></ul>
       <div id="editor"></div>
       <div>
         <input value="js" onclick="myCodeMirror.setOption('mode', 'javascript');" type="submit" />
@@ -46,13 +52,33 @@
     });
     
     remoteStorage.defineModule('code', function(privateClient, publicClient) {
+      var cwd = '';
+      var breadcrumbsCb = function() {},
+        dirsCb = function() {},
+        filesCb = function() {},
+        currCb = function() {};
       return {
         exports: {
           up: function(path, type, content) {
             return privateClient.storeFile(type, path, content);
           },
           down: function(path) {
-            return privateClient.getFile(path);
+            return privateClient.getFile(path).then(function(obj) {
+              obj.path = path;
+              currCb(obj);
+            });
+          },
+          onBreadcrumbs: function(cb) {
+            breadcrumbsCb = cb;
+          },
+          onDirs: function(cb) {
+            dirsCb = cb;
+          },
+          onFiles: function(cb) {
+            filesCb = cb;
+          },
+          onCurr: function(cb) {
+            currCb = cb;
           }
         }
       };
@@ -62,11 +88,33 @@
       code: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
-      //myCodeMirror.setValue('hello world');
     });
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
+      remoteStorage.code.onBreadcrumbs(function(breadcrumbs) {
+        var str = '';
+        for(var i=0; i<breadcrumbs.length; i++) {
+          str += '<li id="breadcrumb_'+i+'">'+breadcrumbs[i]+'</a>';
+        }  
+        $('breadcrumbs').innerHTML = str;
+      });
+
+      remoteStorage.code.onDirs(function(dirs) {
+        var str = '';
+        for(var i=0; i<dirs.length; i++) {
+          str += '<li id="dir_'+i+'">'+dirs[i]+'</a>';
+        }  
+        $('dirs').innerHTML = str;
+      });
+
+      remoteStorage.code.onFiles(function(files) {
+        var str = '';
+        for(var i=0; i<files.length; i++) {
+          str += '<li id="file_'+i+'">'+files[i]+'</a>';
+        } 
+        $('files').innerHTML = str;
+      });
 
       $('up').onclick = function() {
         var mode = myCodeMirror.getOption('mode'), type;
@@ -82,19 +130,25 @@
         remoteStorage.code.up($('path').value, type, myCodeMirror.getValue());
       }
       $('down').onclick = function() {
-        remoteStorage.code.down($('path').value).then(function(obj) {
-          if(obj.mimeType=='application/javascript') {
-            myCodeMirror.setOption('mode', 'javascript');
-          } else if(obj.mimeType=='text/html') {
-            myCodeMirror.setOption('mode', 'htmlmixed');
-          } else if(obj.mimeType=='application/php') {
-            myCodeMirror.setOption('mode', 'php');
-          } else {
-            myCodeMirror.setOption('mode', 'markdown');
-          }  
-          myCodeMirror.setValue(obj.data);
-        });
-      }
+        remoteStorage.code.down($('path').value);
+      };
+      remoteStorage.code.onCurr(function(obj) {
+        console.log('onCurr', obj);
+        if(obj.mimeType=='application/javascript') {
+          myCodeMirror.setOption('mode', 'javascript');
+        } else if(obj.mimeType=='text/html') {
+          myCodeMirror.setOption('mode', 'htmlmixed');
+        } else if(obj.mimeType=='application/php') {
+          myCodeMirror.setOption('mode', 'php');
+        } else {
+          myCodeMirror.setOption('mode', 'markdown');
+        }
+        if(typeof(obj.data) != 'string') {
+          obj.data = '';
+        }
+        myCodeMirror.setValue(obj.data);
+        $('path').value = obj.path;
+      }); 
     });
   </script>
 </html>
