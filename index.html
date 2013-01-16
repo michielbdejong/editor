@@ -43,7 +43,6 @@
     var myCodeMirror = CodeMirror($('editor'), {
       lineNumbers: true
     });
-    myCodeMirror.setValue('hello world');
     
     remoteStorage.defineModule('code', function(privateClient, publicClient) {
       return {
@@ -62,6 +61,7 @@
       code: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
+      myCodeMirror.setValue('hello world');
     });
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
