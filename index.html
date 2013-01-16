@@ -17,10 +17,10 @@
     <script src="codemirror-3.0/lib/util/searchcursor.js"></script>
     <script src="codemirror-3.0/lib/util/dialog.js"></script>
 
-    <script src="remotestorage/remoteStorage.min.js"></script>
+    <script src="remotestorage/remoteStorage-relative-cube.js"></script>
   </head>
   <body>
-    <div id="remotestorage-widget"></div>
+    <div id="remotestorage-connect"></div>
     <div id="pleaseConnect">Please connect...</div>
     <div id="main">
       <div id="editor"></div>
@@ -60,7 +60,7 @@
     remoteStorage.claimAccess({
       code: 'rw'
     }).then(function () {
-      remoteStorage.displayWidget('remotestorage-widget');
+      remoteStorage.displayWidget('remotestorage-connect');
     });
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
