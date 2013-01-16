@@ -21,83 +21,76 @@
   </head>
   <body>
     <div id="remotestorage-widget"></div>
-    <div id="editor"></div>
-    <div>
-      <input value="js" onclick="myCodeMirror.setOption('mode', 'javascript');" type="submit" />
-      <input value="html" onclick="myCodeMirror.setOption('mode', 'htmlmixed');" type="submit" />
-      <input value="markdown" onclick="myCodeMirror.setOption('mode', 'markdown');" type="submit" />
-      <input value="php" onclick="myCodeMirror.setOption('mode', 'php');" type="submit" />
-      |
-      <input id="module" type="text" />
-      <input id="public" type="text" />
-      <input id="path" type="text" />
-      <input value="up" onclick="up()" type="submit" />
-      <input value="down" onclick="down()" type="submit" />
+    <div id="pleaseConnect">Please connect...</div>
+    <div id="main">
+      <div id="editor"></div>
+      <div>
+        <input value="js" onclick="myCodeMirror.setOption('mode', 'javascript');" type="submit" />
+        <input value="html" onclick="myCodeMirror.setOption('mode', 'htmlmixed');" type="submit" />
+        <input value="markdown" onclick="myCodeMirror.setOption('mode', 'markdown');" type="submit" />
+        <input value="php" onclick="myCodeMirror.setOption('mode', 'php');" type="submit" />
+        |
+        <input id="path" type="text" value="test.txt" />
+        <input value="up" id="up" type="submit" />
+        <input value="down" id="down" type="submit" />
+      </div>
     </div>
   </body>  
   <script>
     function $(id) { return document.getElementById(id); }
+    $('main').style.display='none';
     var myCodeMirror = CodeMirror($('editor'), {
       lineNumbers: true
     });
+    myCodeMirror.setValue('hello world');
     
-    remoteStorage.claimAccess({
-      documents: 'rw',
-      code: 'rw',
-      profile: 'rw'
-    });
-    remoteStorage.displayWidget('remotestorage-widget');
-    
-    function Module() {
-      return function(privateClient, publicClient) {
-        return {
-          exports: {
-            up: function(public, path, type, content) {
-              if(public) {
-                return publicClient.storeFile(path, type, content);
-              } else {
-                return publicClient.storeFile(path, type, content);
-              }
-            },
-            down: function(public, path) {
-              if(public) {
-                return publicClient.getFile(path);
-              } else {
-                return publicClient.getFile(path);
-              }
-            }
+    remoteStorage.defineModule('code', function(privateClient, publicClient) {
+      return {
+        exports: {
+          up: function(path, type, content) {
+            return privateClient.storeFile(type, path, content);
+          },
+          down: function(path) {
+            return privateClient.getFile(path);
           }
-        };
+        }
       };
-    }
- 
-    remoteStorage.defineModule('document', new Module());
-    remoteStorage.defineModule('code', new Module());
-    remoteStorage.defineModule('profile', new Module());
-    function up() {
-      var mode = myCodeMirror.getOption('mode'), type;
-      if(mode=='javascript') {
-        type = 'application/javascript';
-      } else if(mode == 'htmlmixed') {
-        type = 'text/html';
-      } else {
-        type = 'text/plain';
-      }
-      remoteStorage[$('module').value].up($('public').value.length, $('path').value, type, myCodeMirror.getValue());
-    }
-    function down() {
-      remoteStorage[$('module').value].down($('public').value.length, $('path').value).then(function(type, content) {
-        if(type=='application/javascript') {
-          myCodeMirror.setOption('mode', 'javascript');
-        } else if(type=='text/html') {
-          myCodeMirror.setOption('mode', 'htmlmixed');
-        } else if(type=='application/php') {
-          myCodeMirror.setOption('mode', 'php');
+    });
+
+    remoteStorage.claimAccess({
+      code: 'rw'
+    }).then(function () {
+      remoteStorage.displayWidget('remotestorage-widget');
+    });
+    remoteStorage.onWidget('ready', function() {
+      $('pleaseConnect').style.display='none';
+      $('main').style.display='block';
+
+      $('up').onclick = function() {
+        var mode = myCodeMirror.getOption('mode'), type;
+        if(mode=='javascript') {
+          type = 'application/javascript';
+        } else if(mode == 'htmlmixed') {
+          type = 'text/html';
         } else {
-          myCodeMirror.setOption('mode', 'markdown');
-        }  
-        myCodeMirror.setValue(content);
-      });
-    }
+          type = 'text/plain';
+        }
+        remoteStorage.code.up($('path').value, type, myCodeMirror.getValue());
+      }
+      $('down').onclick = function() {
+        remoteStorage.code.down($('path').value).then(function(obj) {
+          if(obj.mimeType=='application/javascript') {
+            myCodeMirror.setOption('mode', 'javascript');
+          } else if(obj.mimeType=='text/html') {
+            myCodeMirror.setOption('mode', 'htmlmixed');
+          } else if(obj.mimeType=='application/php') {
+            myCodeMirror.setOption('mode', 'php');
+          } else {
+            myCodeMirror.setOption('mode', 'markdown');
+          }  
+          myCodeMirror.setValue(obj.data);
+        });
+      }
+    });
   </script>
 </html>
