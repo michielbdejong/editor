@@ -21,7 +21,7 @@
 
     <script src="remotestorage/remoteStorage-relative-cube.js"></script>
     <style>
-      ul li { display: inline; padding: 3em }
+      ul li { display: inline; margin: 3em }
     </style>
   </head>
   <body>
@@ -30,8 +30,7 @@
     <div id="pleaseConnect">Please connect...</div>
     <div id="main">
       <ul id="cwd"></ul>
-      <ul id="dirs"></ul>
-      <ul id="files"></ul>
+      <ul id="items"></ul>
       <div id="editor"></div>
       <div>
         <input value="js" onclick="myCodeMirror.setOption('mode', 'javascript');" type="submit" />
@@ -53,65 +52,42 @@
     });
     
     remoteStorage.defineModule('code', function(privateClient, publicClient) {
-      var cwd = [];
-      var cwdCb = function() {},
-        dirsCb = function() {},
-        filesCb = function() {},
-        currCb = function() {};
-      function listDir() {
-        privateClient.getListing(cwd.join('')).then(function(arr) {
-          var dirs=[],files=[];
-          for(var i=0; i<arr.length; i++) {
-            if(arr[i].substr(-1)=='/') {
-              dirs.push(arr[i].substring(0, arr[i].length-1));
-            } else {
-              files.push(arr[i]);
-            }
-          }
-          cwdCb(cwd);
-          dirsCb(dirs);
-          filesCb(files);
-        });
-      }
+      var currCb = function() {},
+        dirCb = function() {};
       return {
         exports: {
+          dontSync: function() {
+            privateClient.release('');
+            publicClient.release('');
+          },
           up: function(path, type, content) {
             console.log('privateClient.storeFile', type, path, content);
             return privateClient.storeFile(type, path, content);
           },
           down: function(path) {
-            return privateClient.getFile(path).then(function(obj) {
-              obj.path = path;
-              currCb(obj);
-            });
-          },
-          goToDir: function(name) {
-            if(typeof(name) == 'string') {
-              cwd.push(name+'/');
-            } else {
-              cwd.pop();
-            }
-            listDir();
-          },
-          goToFile: function(file) {
-            var path = cwd.join('')+file;
             privateClient.getFile(path).then(function(obj) {
               obj.path = path;
               currCb(obj);
             });
           },
-          upDir: function(i) {
-            cwd = cwd.slice(0, i);
-            listDir();
+          goToDir: function(path) {
+            privateClient.getListing(path).then(function(arr) {
+              var dirParts = path.split('/'),
+                obj = { items: arr, dir: [] };
+              for(var i=0; i<dirParts.length-1; i++) {
+                obj.dir.push(dirParts[i]+'/');
+              }
+              dirCb(obj);
+            }); 
           },
-          onCwd: function(cb) {
-            cwdCb = cb;
+          goToFile: function(path) {
+            privateClient.getFile(path).then(function(obj) {
+              obj.path = path;
+              currCb(obj);
+            });
           },
-          onDirs: function(cb) {
-            dirsCb = cb;
-          },
-          onFiles: function(cb) {
-            filesCb = cb;
+          onDir: function(cb) {
+            dirCb = cb;
           },
           onCurr: function(cb) {
             currCb = cb;
@@ -124,32 +100,29 @@
       code: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
+      remoteStorage.code.dontSync();
     });
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
-      remoteStorage.code.onCwd(function(cwd) {
+
+      remoteStorage.code.onDir(function(obj) {
         var str = '';
-        for(var i=0; i<cwd.length; i++) {
-          str += '<li id="cwd_'+i+'"><a onclick="remoteStorage.code.upDir('+i+');">'+cwd[i]+'</a></li>';
+        for(var i=0; i<obj.items.length; i++) {
+          if(obj.items[i].substr(-1)=='/') {
+            str += '<li onclick="remoteStorage.code.goToDir(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
+          } else {
+            str += '<li onclick="remoteStorage.code.goToFile(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
+          }
+        }
+        $('items').innerHTML = str;
+        str = '<li onclick="remoteStorage.code.goToDir(\'\');">(root)</li>';
+        var dirSoFar='';
+        for(var i=0; i<obj.dir.length; i++) {
+          dirSoFar += obj.dir[i];
+          str += '<li onclick="remoteStorage.code.goToDir(\''+dirSoFar+'\');">'+obj.dir[i]+'</li>';
         }
         $('cwd').innerHTML = str;
-      });
-
-      remoteStorage.code.onDirs(function(dirs) {
-        var str = '';
-        for(var i=0; i<dirs.length; i++) {
-          str += '<li id="dir_'+i+'"><a onclick="remoteStorage.code.goToDir(\''+dirs[i]+'\');">'+dirs[i]+'</a></li>';
-        }
-        $('dirs').innerHTML = str;
-      });
-
-      remoteStorage.code.onFiles(function(files) {
-        var str = '';
-        for(var i=0; i<files.length; i++) {
-          str += '<li id="file_'+i+'"><a onclick="remoteStorage.code.goToFile(\''+files[i]+'\');">'+files[i]+'</a></li>';
-        }
-        $('files').innerHTML = str;
       });
 
       $('up').onclick = function() {
@@ -185,7 +158,7 @@
         myCodeMirror.setValue(obj.data);
         $('path').value = obj.path;
       });
-      remoteStorage.code.goToDir(); 
+      remoteStorage.code.goToDir(''); 
     });
   </script>
 </html>
