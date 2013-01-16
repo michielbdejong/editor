@@ -60,6 +60,7 @@
       return {
         exports: {
           up: function(path, type, content) {
+            console.log('privateClient.storeFile', type, path, content);
             return privateClient.storeFile(type, path, content);
           },
           down: function(path) {
