@@ -21,7 +21,7 @@
 
     <script src="remotestorage/remoteStorage-relative-cube.js"></script>
     <style>
-      ul li { display: inline }
+      ul li { display: inline; padding: 3em }
     </style>
   </head>
   <body>
@@ -53,11 +53,26 @@
     });
     
     remoteStorage.defineModule('code', function(privateClient, publicClient) {
-      var cwd = '';
-      var breadcrumbsCb = function() {},
+      var cwd = [];
+      var cwdCb = function() {},
         dirsCb = function() {},
         filesCb = function() {},
         currCb = function() {};
+      function listDir() {
+        privateClient.getListing(cwd.join('')).then(function(arr) {
+          var dirs=[],files=[];
+          for(var i=0; i<arr.length; i++) {
+            if(arr[i].substr(-1)=='/') {
+              dirs.push(arr[i].substring(0, arr[i].length-1));
+            } else {
+              files.push(arr[i]);
+            }
+          }
+          cwdCb(cwd);
+          dirsCb(dirs);
+          filesCb(files);
+        });
+      }
       return {
         exports: {
           up: function(path, type, content) {
@@ -70,8 +85,27 @@
               currCb(obj);
             });
           },
-          onBreadcrumbs: function(cb) {
-            breadcrumbsCb = cb;
+          goToDir: function(name) {
+            if(typeof(name) == 'string') {
+              cwd.push(name+'/');
+            } else {
+              cwd.pop();
+            }
+            listDir();
+          },
+          goToFile: function(file) {
+            var path = cwd.join('')+file;
+            privateClient.getFile(path).then(function(obj) {
+              obj.path = path;
+              currCb(obj);
+            });
+          },
+          upDir: function(i) {
+            cwd = cwd.slice(0, i);
+            listDir();
+          },
+          onCwd: function(cb) {
+            cwdCb = cb;
           },
           onDirs: function(cb) {
             dirsCb = cb;
@@ -94,27 +128,27 @@
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
-      remoteStorage.code.onBreadcrumbs(function(breadcrumbs) {
+      remoteStorage.code.onCwd(function(cwd) {
         var str = '';
-        for(var i=0; i<breadcrumbs.length; i++) {
-          str += '<li id="breadcrumb_'+i+'">'+breadcrumbs[i]+'</a>';
-        }  
-        $('breadcrumbs').innerHTML = str;
+        for(var i=0; i<cwd.length; i++) {
+          str += '<li id="cwd_'+i+'"><a onclick="remoteStorage.code.upDir('+i+');">'+cwd[i]+'</a></li>';
+        }
+        $('cwd').innerHTML = str;
       });
 
       remoteStorage.code.onDirs(function(dirs) {
         var str = '';
         for(var i=0; i<dirs.length; i++) {
-          str += '<li id="dir_'+i+'">'+dirs[i]+'</a>';
-        }  
+          str += '<li id="dir_'+i+'"><a onclick="remoteStorage.code.goToDir(\''+dirs[i]+'\');">'+dirs[i]+'</a></li>';
+        }
         $('dirs').innerHTML = str;
       });
 
       remoteStorage.code.onFiles(function(files) {
         var str = '';
         for(var i=0; i<files.length; i++) {
-          str += '<li id="file_'+i+'">'+files[i]+'</a>';
-        } 
+          str += '<li id="file_'+i+'"><a onclick="remoteStorage.code.goToFile(\''+files[i]+'\');">'+files[i]+'</a></li>';
+        }
         $('files').innerHTML = str;
       });
 
@@ -150,7 +184,8 @@
         }
         myCodeMirror.setValue(obj.data);
         $('path').value = obj.path;
-      }); 
+      });
+      remoteStorage.code.goToDir(); 
     });
   </script>
 </html>
