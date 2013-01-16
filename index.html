@@ -74,8 +74,10 @@
           type = 'application/javascript';
         } else if(mode == 'htmlmixed') {
           type = 'text/html';
+        } else if(mode == 'php') {
+          type = 'application/php';
         } else {
-          type = 'text/plain';
+          type = 'text/markdown';
         }
         remoteStorage.code.up($('path').value, type, myCodeMirror.getValue());
       }
