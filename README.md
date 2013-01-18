@@ -5,3 +5,4 @@ a minimal remotestorage - CodeMirror app
 * css warnings due to remoteStorage.js library
 * css warnings due to CodeMirror library
 * app icon and favicon are missing
+* deploys are failing on 5apps
