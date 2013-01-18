@@ -81,10 +81,6 @@
       });
       return {
         exports: {
-          dontSync: function() {
-            privateClient.release('');
-            publicClient.release('');
-          },
           up: function(path, type, content) {
             console.log('privateClient.storeFile', type, path, content);
             return privateClient.storeFile(type, path, content);
@@ -111,8 +107,8 @@
       code: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
-      remoteStorage.code.dontSync();
     });
+    
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
@@ -170,6 +166,14 @@
         $('path').value = obj.path;
       });
       remoteStorage.code.goToDir(''); 
+    });
+
+    remoteStorage.onWidget('disconnect', function() {
+      $('main').style.display='none';
+      $('pleaseConnect').style.display='block';
+      $('cwd').innerHTML='';
+      $('items').innerHTML='';
+      myCodeMirror.setValue('');
     });
   </script>
 </html>
