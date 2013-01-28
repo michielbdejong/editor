@@ -82,7 +82,7 @@
       return {
         exports: {
           init: function() {
-            privateClient.release('');
+            privateClient.use('', true);
             publicClient.release('');
           },
           up: function(path, type, content) {
