@@ -81,6 +81,10 @@
       });
       return {
         exports: {
+          init: function() {
+            privateClient.release('');
+            publicClient.release('');
+          },
           up: function(path, type, content) {
             console.log('privateClient.storeFile', type, path, content);
             return privateClient.storeFile(type, path, content);
@@ -107,6 +111,7 @@
       code: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
+      remoteStorage.code.init();
     });
     
     remoteStorage.onWidget('ready', function() {
