@@ -51,8 +51,10 @@
     var myCodeMirror = CodeMirror($('editor'), {
       lineNumbers: true
     });
-    myCodeMirror.setValue(' ');//trick to make gutter appear
-    
+    //trick to make gutter appear:
+    setTimout(function() {
+      myCodeMirror.setValue(' ');
+    }, 0);
     remoteStorage.claimAccess({
       code: 'rw'
     }).then(function () {
