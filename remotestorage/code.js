@@ -14,6 +14,7 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
     }); 
   }
   function goToFile(path) {
+    privateClient.use(path);
     currFile=path;
     privateClient.getFile(path).then(function(obj) {
       obj.path = path;
