@@ -48,13 +48,7 @@
   <script>
     function $(id) { return document.getElementById(id); }
     $('main').style.display='none';
-    var myCodeMirror = CodeMirror($('editor'), {
-      lineNumbers: true
-    });
-    //trick to make gutter appear:
-    setTimeout(function() {
-      myCodeMirror.setValue(' ');
-    }, 0);
+    var myCodeMirror;
     remoteStorage.claimAccess({
       code: 'rw'
     }).then(function () {
@@ -65,7 +59,9 @@
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
-
+      myCodeMirror = CodeMirror($('editor'), {
+        lineNumbers: true
+      });
       remoteStorage.code.onDir(function(obj) {
         var str = '';
         for(var i=0; i<obj.items.length; i++) {
