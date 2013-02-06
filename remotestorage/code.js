@@ -4,6 +4,7 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
     currDir, currFile;
   function goToDir(path) {
     privateClient.getListing(path).then(function(arr) {
+      console.log('contents of directory "'+path+'"', arr);
       currDir = path;
       var dirParts = path.split('/'),
       obj = { items: arr, dir: [] };
