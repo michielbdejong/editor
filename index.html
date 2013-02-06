@@ -61,9 +61,12 @@
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
       if(!myCodeMirror) {//protection in case this code is somehow called twice
+        console.log('displaying CodeMirror');
         myCodeMirror = CodeMirror($('editor'), {
           lineNumbers: true
         });
+      } else {
+        console.log('Not displaying CodeMirror');
       }
       remoteStorage.code.onDir(function(obj) {
         var str = '';
