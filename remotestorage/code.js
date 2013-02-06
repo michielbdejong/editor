@@ -3,16 +3,14 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
     dirCb = function() {},
     currDir, currFile;
   function goToDir(path) {
-    privateClient.use(path).then(function() {
-      privateClient.getListing(path).then(function(arr) {
-        currDir = path;
-        var dirParts = path.split('/'),
-        obj = { items: arr, dir: [] };
-        for(var i=0; i<dirParts.length-1; i++) {
-          obj.dir.push(dirParts[i]+'/');
-        }
-        dirCb(obj);
-      }); 
+    privateClient.getListing(path).then(function(arr) {
+      currDir = path;
+      var dirParts = path.split('/'),
+      obj = { items: arr, dir: [] };
+      for(var i=0; i<dirParts.length-1; i++) {
+        obj.dir.push(dirParts[i]+'/');
+      }
+      dirCb(obj);
     }); 
   }
   function goToFile(path) {
