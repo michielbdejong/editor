@@ -24,7 +24,7 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
   }
   privateClient.on('change', function(event) {
     goToDir(currDir);
-    if(event.relativePath == currFile) {
+    if(event.relativePath == currFile && event.origin != 'window') {
       goToFile(currFile);
     }
   });
