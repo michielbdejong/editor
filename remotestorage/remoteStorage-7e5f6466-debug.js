@@ -5684,6 +5684,7 @@ define('lib/baseClient',[
     //   path      - path relative to the module root
     //   treeOnly  - boolean value, whether only the tree should be synced.
     //
+    // Returns a promise.
     use: function(path, treeOnly) {
       var absPath = this.makePath(path);
       return store.setNodeForce(absPath, !treeOnly, true);
@@ -5695,6 +5696,10 @@ define('lib/baseClient',[
     //
     // See <sync> for details.
     //
+    // Parameters:
+    //   path      - path relative to the module root
+    //
+    // Returns a promise.
     release: function(path) {
       var absPath = this.makePath(path);
       return store.setNodeForce(absPath, false, false);
@@ -6864,20 +6869,9 @@ define('lib/widget',[
     if(params.access_token) {
       wireClient.setBearerToken(params.access_token);
     }
-    // Query parameter: storage_root, storage_api
-    if(params.storage_root && params.storage_api) {
-      wireClient.setStorageInfo({
-        type: params.storage_api,
-        href: params.storage_root
-      });
-    }
-    // Query parameter: authorize_endpoint
-    if(params.authorize_endpoint) {
-      requestToken(params.authorize_endpoint);
-    }
-    // Query parameter: user_address
-    if(params.user_address) {
-      view.setUserAddress(params.user_address);
+    // Query parameter: remotestorage
+    if(params.remotestorage) {
+      view.setUserAddress(params.remotestorage);
     } else {
       var userAddress = settings.get('userAddress');
       if(userAddress) {
