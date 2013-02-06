@@ -33,7 +33,8 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
   return {
     exports: {
       init: function() {
-        privateClient.release('');
+        //privateClient.release('');
+        privateClient.use('', true);
         publicClient.release('');
       },
       up: function(path, type, content) {
