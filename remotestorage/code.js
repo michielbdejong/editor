@@ -15,14 +15,14 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
     }); 
   }
   function goToFile(path) {
-    privateClient.use(path).then(function() {
+    //privateClient.use(path).then(function() {
       currFile=path;
       console.log('now using '+path);
       privateClient.getFile(path).then(function(obj) {
         obj.path = path;
         currCb(obj);
       });
-    });
+    //});
   }
   privateClient.on('change', function(event) {
     goToDir(currDir);
