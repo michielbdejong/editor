@@ -39,7 +39,7 @@ remoteStorage.defineModule('code', function(privateClient, publicClient) {
       },
       up: function(path, type, content) {
         console.log('privateClient.storeFile', type, path, content);
-        return privateClient.storeFile(type, path, content);
+        return privateClient.storeFile(type, path, content, false);
       },
       down: function(path) {
         privateClient.getFile(path).then(function(obj) {
