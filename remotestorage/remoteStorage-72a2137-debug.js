@@ -3000,14 +3000,30 @@ define('lib/store',[
 
   function setNodePending(path, timestamp) {
     return dataStore.transaction(true, function(transaction) {
-      return getNode(path, transaction).then(function(node) {
-        delete node.data;
-        node.pending = true;
-        return updateNode(path, node, false, false, timestamp, undefined, transaction).
-          then(function() {
-            transaction.commit();
+      return isForced(util.containingDir(path), transaction).
+        then(function(isForced) {
+          var paths = [path];
+          if(! isForced) {
+            var parts = util.pathParts(path);
+            var pl = parts.length;
+            for(var i=parts.length - 1;i>0;i--) {
+              paths.unshift(parts.slice(0, i).join(''));
+            }
+          }
+          return util.asyncEach(paths, function(p) {
+            return getNode(p, transaction).then(function(node) {
+              // clear only data nodes (we want to preserve pending listings)
+              if(! util.isDir(p)) {
+                delete node.data;
+              }
+              node.pending = true;
+              return updateNode(p, node, false, false, timestamp, undefined, transaction);
+            });
           });
-      });
+        }).
+        then(function() {
+          transaction.commit();
+        });
     });
   }
 
@@ -3331,7 +3347,7 @@ define('lib/store',[
     }
   }
 
-  function isForced(path) {
+  function isForced(path, transaction) {
     var parts = util.pathParts(path);
 
     return util.makePromise(function(promise) {
@@ -3349,7 +3365,7 @@ define('lib/store',[
         if(parts.length === 0) {
           promise.fulfill(false);
         } else {
-          getNode(parts.join('')).
+          getNode(parts.join(''), transaction).
             then(checkOne, promise.fail.bind(promise));
         }
       }
@@ -5414,13 +5430,17 @@ define('lib/baseClient',[
       return this.ensureAccess('r').
         then(util.curry(store.getNode, fullPath)).
         then(function(node) {
-          if((!node) || Object.keys(node.data).length === 0) {
+          if((!node) || node.pending || Object.keys(node.data).length === 0) {
             return store.isForced(fullPath).
               then(function(isForced) {
                 if(isForced) {
                   return node;
                 } else {
-                  return sync.updateDataNode(fullPath);
+                  return sync.updateDataNode(fullPath).
+                    then(function(node) {
+                      return store.setNodePending(fullPath, new Date().getTime()).
+                        then(function() { return node; });
+                    });
                 }
               });
           } else {
@@ -5522,6 +5542,15 @@ define('lib/baseClient',[
         then(function(node) {
           if(node.pending) {
             return sync.updateDataNode(fullPath);
+          } else if(! node.data) {
+            return store.getNode(util.containingDir(fullPath)).
+              then(function(parentNode) {
+                if(parentNode.pending) {
+                  return sync.updateDataNode(fullPath);
+                } else {
+                  return node;
+                }
+              });
           } else {
             return node;
           }
