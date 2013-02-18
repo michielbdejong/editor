@@ -31,6 +31,10 @@
     <h1>Editor</h1>
     <div id="pleaseConnect">Please connect...</div>
     <div id="main">
+      sockethub credentials: <input id="shcreds" width="60em" /><br>
+      shell command: <input id="shcmd" width="60em" /><br>
+      <input type="submit" onclick="exec();" /><br>
+      <div id="shlog">(log)</div>
       <ul id="cwd"></ul>
       <ul id="items"></ul>
       <div id="editor"></div>
@@ -56,7 +60,21 @@
       remoteStorage.displayWidget('remotestorage-connect');
       remoteStorage.code.init();
     });
-    
+
+    function exec() {
+      sockethub.connect($('shcreds').value).then(function() {
+        sockethub.do({
+          platform: 'shell',
+          verb: 'execute',
+          object: {
+            text: $('shcmd').value
+          }
+        }, function(txt) {
+          $('shlog').innerHTML = txt;
+        });
+      });
+    }
+
     remoteStorage.onWidget('ready', function() {
       $('pleaseConnect').style.display='none';
       $('main').style.display='block';
