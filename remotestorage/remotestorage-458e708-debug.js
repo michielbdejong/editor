@@ -1,4 +1,4 @@
-/* remoteStorage.js 0.7.2 remotestorage.io, MIT-licensed */
+/* remoteStorage.js 0.7-HEAD remotestorage.io, MIT-licensed */
 (function() {
 
 /**
@@ -6662,15 +6662,19 @@ define('lib/widget',[
 
   function processParams() {
     var params = parseParams();
-console.log(params);
+
     // Query parameter: access_token
     if(params.access_token) {
       wireClient.setBearerToken(params.access_token);
     }
     // Query parameter: remotestorage
     if(params.remotestorage) {
-console.log('yep', view);
       view.setUserAddress(params.remotestorage);
+      setTimeout(function() {
+        if(wireClient.getState() !== 'connected') {
+          connectStorage(params.remotestorage);
+        }
+      }, 0);
     } else {
       var userAddress = settings.get('userAddress');
       if(userAddress) {
@@ -6821,14 +6825,10 @@ define('lib/nodeConnect',['./webfinger'], function(webfinger) {
       // As soon as the callback is called, the storage info has been discovered or an error has happened.
       // It receives a single argument, the error. If it's null or undefined, everything is ok.
       setUserAddress: function(userAddress, callback) {
-        console.log('6824');
         webfinger.getStorageInfo(userAddress, { timeout: 3000 }, function(err, data) {
-          console.log('6826');
           if(err) {
-          console.log('6828');
             console.error("Failed to look up storage info for user " + userAddress + ": ", err);
           } else {
-          console.log('6831');
             remoteStorage.setStorageInfo(data.type, data.href);
           }
 
