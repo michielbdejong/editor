@@ -3,7 +3,7 @@ remoteStorage.defineModule('www', function(privateClient, publicClient) {
     dirCb = function() {},
     currDir, currFile;
   function goToDir(path) {
-    privateClient.getListing(path).then(function(arr) {
+    publicClient.getListing(path).then(function(arr) {
       console.log('contents of directory "'+path+'"', arr);
       currDir = path;
       var dirParts = path.split('/'),
@@ -15,16 +15,16 @@ remoteStorage.defineModule('www', function(privateClient, publicClient) {
     }); 
   }
   function goToFile(path) {
-    //privateClient.use(path).then(function() {
+    //publicClient.use(path).then(function() {
       currFile=path;
       console.log('now using '+path);
-      privateClient.getFile(path).then(function(obj) {
+      publicClient.getFile(path).then(function(obj) {
         obj.path = path;
         currCb(obj);
       });
     //});
   }
-  privateClient.on('change', function(event) {
+  publicClient.on('change', function(event) {
     goToDir(currDir);
     if(event.relativePath == currFile && event.origin != 'window') {
       goToFile(currFile);
@@ -33,16 +33,16 @@ remoteStorage.defineModule('www', function(privateClient, publicClient) {
   return {
     exports: {
       init: function() {
-        //privateClient.use('', true);
+        //publicClient.use('', true);
         privateClient.release('');
         publicClient.release('');
       },
       up: function(path, type, content) {
-        console.log('privateClient.storeFile', type, path, content);
-        return privateClient.storeFile(type, path, content, false);
+        console.log('publicClient.storeFile', type, path, content);
+        return publicClient.storeFile(type, path, content, false);
       },
       down: function(path) {
-        privateClient.getFile(path).then(function(obj) {
+        publicClient.getFile(path).then(function(obj) {
           obj.path = path;
           currCb(obj);
         });
