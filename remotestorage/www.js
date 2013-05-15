@@ -1,4 +1,4 @@
-remoteStorage.defineModule('code', function(privateClient, publicClient) {
+remoteStorage.defineModule('www', function(privateClient, publicClient) {
   var currCb = function() {},
     dirCb = function() {},
     currDir, currFile;

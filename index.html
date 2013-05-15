@@ -21,7 +21,7 @@
     <script src="codemirror-3.0/lib/util/dialog.js"></script>
 
     <script src="remotestorage/remotestorage-458e708-debug.js"></script>
-    <script src="remotestorage/code.js"></script>
+    <script src="remotestorage/www.js"></script>
     <style>
       ul li { display: inline; margin: 3em }
     </style>
@@ -55,10 +55,10 @@
     $('main').style.display='none';
     var myCodeMirror;
     remoteStorage.claimAccess({
-      code: 'rw'
+      www: 'rw'
     }).then(function () {
       remoteStorage.displayWidget('remotestorage-connect');
-      remoteStorage.code.init();
+      remoteStorage.www.init();
     });
 
     function exec() {
@@ -86,21 +86,21 @@
       } else {
         console.log('Not displaying CodeMirror');
       }
-      remoteStorage.code.onDir(function(obj) {
+      remoteStorage.www.onDir(function(obj) {
         var str = '';
         for(var i=0; i<obj.items.length; i++) {
           if(obj.items[i].substr(-1)=='/') {
-            str += '<li onclick="remoteStorage.code.goToDir(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
+            str += '<li onclick="remoteStorage.www.goToDir(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
           } else {
-            str += '<li onclick="remoteStorage.code.goToFile(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
+            str += '<li onclick="remoteStorage.www.goToFile(\''+obj.dir.join('')+obj.items[i]+'\');">'+obj.items[i]+'</li>';
           }
         }
         $('items').innerHTML = str;
-        str = '<li onclick="remoteStorage.code.goToDir(\'\');">(root)</li>';
+        str = '<li onclick="remoteStorage.www.goToDir(\'\');">(root)</li>';
         var dirSoFar='';
         for(var i=0; i<obj.dir.length; i++) {
           dirSoFar += obj.dir[i];
-          str += '<li onclick="remoteStorage.code.goToDir(\''+dirSoFar+'\');">'+obj.dir[i]+'</li>';
+          str += '<li onclick="remoteStorage.www.goToDir(\''+dirSoFar+'\');">'+obj.dir[i]+'</li>';
         }
         $('cwd').innerHTML = str;
       });
@@ -116,12 +116,12 @@
         } else {
           type = 'text/markdown';
         }
-        remoteStorage.code.up($('path').value, type, myCodeMirror.getValue());
+        remoteStorage.www.up($('path').value, type, myCodeMirror.getValue());
       }
       $('down').onclick = function() {
-        remoteStorage.code.down($('path').value);
+        remoteStorage.www.down($('path').value);
       };
-      remoteStorage.code.onCurr(function(obj) {
+      remoteStorage.www.onCurr(function(obj) {
         console.log('onCurr', obj);
         if(obj.mimeType=='application/javascript') {
           myCodeMirror.setOption('mode', 'javascript');
@@ -138,7 +138,7 @@
         myCodeMirror.setValue(obj.data);
         $('path').value = obj.path;
       });
-      remoteStorage.code.goToDir(''); 
+      remoteStorage.www.goToDir(''); 
     });
 
     remoteStorage.onWidget('disconnect', function() {
