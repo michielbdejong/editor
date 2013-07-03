@@ -141,7 +141,7 @@
   }
 
   var RemoteStorage = function() {
-    RemoteStorage.eventHandling(this, 'ready', 'connected', 'disconnected', 'disconnect', 'conflict', 'error');
+    RemoteStorage.eventHandling(this, 'ready', 'disconnected', 'disconnect', 'conflict', 'error');
     // pending get/put/delete calls.
     this._pending = [];
     this._setGPD({
@@ -187,9 +187,8 @@
         }
 
         try {
-          this._emit('ready');
           if(this.connected) {
-            this._emit('connected');
+            this._emit('ready');
           }
           this._processPending();
         } catch(exc) {
@@ -883,7 +882,7 @@ RemoteStorage.Assets = {
     this.rs = remoteStorage;
     this.view = new View;
 
-    this.rs.on('connected', stateSetter(this, 'connected'));
+    this.rs.on('ready', stateSetter(this, 'connected'));
     this.rs.on('disconnected', stateSetter(this, 'disconnected'));
     this.view.on('connect', 
                  function(a){
@@ -2787,7 +2786,7 @@ global.tv4 = publicApi;
   };
 
   RemoteStorage.Sync._rs_init = function(remoteStorage) {
-    remoteStorage.on('connected', function() {
+    remoteStorage.on('ready', function() {
       remoteStorage.syncCycle();
     });
   };
