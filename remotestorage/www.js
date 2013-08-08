@@ -32,11 +32,6 @@ remoteStorage.defineModule('www', function(privateClient, publicClient) {
   });
   return {
     exports: {
-      init: function() {
-        //publicClient.use('', true);
-        privateClient.release('');
-        publicClient.release('');
-      },
       up: function(path, type, content) {
         console.log('publicClient.storeFile', type, path, content);
         return publicClient.storeFile(type, path, content, false);
