@@ -54,7 +54,7 @@
     function $(id) { return document.getElementById(id); }
     $('main').style.display='none';
     var myCodeMirror;
-    remoteStorage.claimAccess({ www: 'rw' });
+    remoteStorage.access.claim({ www: 'rw' });
     remoteStorage.displayWidget('remotestorage-connect');
     remoteStorage.www.init();
 
